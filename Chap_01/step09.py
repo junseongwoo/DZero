@@ -2,7 +2,7 @@
 # 3가지 개선
 # 1. 파이썬 함수 이용 line 66
 # 2. backward 메서드 간소화 
-
+# 3. ndarray만 취급 
 import numpy as np 
 
 class Variable:
@@ -15,6 +15,14 @@ class Variable:
         self.creator = func
     
     def backward(self):
+        # y.grad = np.array(1.0)를 생략하기 위해 
+        # 변수의 grad가 None 이면 자동으로 미분값을 생성하게 함
+        # np.ones_like(self.data)는 self.data와 형상과 데이터 타입이 같은 ndarray 인스턴스 생성
+        #   - 모든 요소를 1로 채워서 돌려줌 
+        #   - self.data가 스칼라이면 self.grad도 스칼라가 됌 
+        if self.grad is None: 
+            self.grad = np.ones_like(self.data)
+
         funcs = [self.creator]
         while funcs :
             f = funcs.pop()                
@@ -84,11 +92,14 @@ if __name__ == "__main__":
     '''
 
     x = Variable(np.array(0.5))
+    '''
     a = square(x)
     b = exp(a)
     y = square(b)
+    '''
 
-    y.grad = np.array(1.0)
+    y = square(exp(square(x)))
+    #y.grad = np.array(1.0)
     y.backward()
     print(x.grad)
 

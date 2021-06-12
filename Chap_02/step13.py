@@ -6,6 +6,7 @@ import unittest
 class Variable:
     def __init__(self, data) -> None:
         # ndarray 가 아닌 데이타 타입이 오면 에러 띄움 
+
         if data is not None:
             if not isinstance(data, np.ndarray):
                 raise TypeError('{}은(는) 지원하지 않습니다.'.format(type(data)))
@@ -23,12 +24,32 @@ class Variable:
 
         funcs = [self.creator]
         while funcs :
-            f = funcs.pop()                
-            x, y = f.input, f.output       
-            x.grad = f.backward(y.grad)    
+            f = funcs.pop()        
+            #Step_13   
+            #x, y = f.input, f.output     # 함수의 입출력을 얻는다.
+            #x.grad = f.backward(y.grad)  # backward 메서드 호출 
 
-            if x.creator is not None :
-                funcs.append(x.creator)    
+            # 1. 출력 변수 outputs에 담겨 있는 미분 값들을 리스트에 담음
+
+            gys = [output.grad for output in f.outputs]
+
+            # 2. 함수 f의 역전파 호출 * 붙여 언팩을 해줌  
+            gxs = f.backward(*gys)
+
+            # 3. 튜플이 아니라면 튜플로 변환 
+            if not isinstance(gxs, tuple):
+                gxs = (gxs, )
+            
+            # 4. 역전파로 전파되는 미분 값을 Variable의 인스턴스 변수 grad에 저장
+            # gxs[i] = f.inputs[i]
+
+            for x, gx in zip(f.inputs, gxs):
+                x.grad = gx
+
+                if x.creator is not None :
+                    funcs.append(x.creator)    
+
+                    
 
 class Function:
     def __call__(self, *inputs):
@@ -42,7 +63,7 @@ class Function:
             output.set_creator(self)
         
         self.inputs = inputs
-        self.output = outputs
+        self.outputs = outputs
         return outputs if len(outputs) > 1 else outputs[0]
 
     def forward(self, x):
@@ -56,10 +77,12 @@ class Square(Function):
         y = x ** 2
         return y
 
-    def backward(self, grad):  
-        x = self.input.data
-        grad = (2 * x) * grad  
-        return grad
+    def backward(self, gy):  
+        #Step_13 
+        #x = self.input.data
+        x = self.inputs[0].data 
+        gy = (2 * x) * gy  
+        return gy
 
 class Exp(Function):
     def forward(self, x):
@@ -119,13 +142,19 @@ class Add(Function):
         y = x0 + x1
         return y
 
+    def backward(self, gy):
+        return gy, gy
+
 #Step_12 : Add 클래스를 파이썬 함수로 만듬
 def add(x0, x1):
     return Add()(x0, x1)
 
 if __name__ == "__main__":
-    x0 = Variable(np.array(2))
-    x1 = Variable(np.array(3))
+    x = Variable(np.array(2.0))
+    y = Variable(np.array(3.0))
 
-    y = add(x0, x1) 
-    print(y.data)
+    z = add(square(x), square(y))
+    z.backward()
+    print(z.grad)
+    print(y.grad)
+    print(x.grad)

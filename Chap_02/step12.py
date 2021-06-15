@@ -1,7 +1,10 @@
-# Step_11 : 가변 길이 인수 (순전파)
-# 이때까지 하나의 값을 받아 하나의 출력을 냈지만
-# Function을 수정해 가변 길이의 입출력을 받으려함 
-#   - 변수들을 리스트 or 튜플에 넣어 처리 
+# Step_12 : 가변 길이 인수 (개선)
+# Add 클래스를 사용 할 때 사용하는 사람에게 
+# 입력 변수를 리스트에 담아 입력하도록 요구하거나
+# 반환 값으로 튜플을 받게하는 것은 자연스럽지 않다.
+# 1. 사용하는 사람을 위한 개선
+# 2. 구현하는 사람을 위한 개선 
+
 import numpy as np 
 import unittest 
 
@@ -38,11 +41,13 @@ class Function:
     # 2. forward 메서드에서 구체적인 계산 실시
     # 3. 계산 결과를 Variable에 넣고
     # 4. 자신이 '창조자' 라고 원산지 표시
-    def __call__(self, inputs):
+    def __call__(self, *inputs):
         # 리스트 내포 : inputs 리스트의 각 원소 x에 대해 
         # 각각의 데이터 (x.data)를 꺼내고, 꺼낸 원소들로 새로운 리스트를 만듬
         xs = [x.data for x in inputs]
-        ys = self.forward(xs)
+        ys = self.forward(*xs) # 별표를 붙여 언팩
+        if not isinstance(ys, tuple): # 튜플이 아닌 경우 추가 지원
+            ys = (ys,)
         outputs = [Variable(as_array(y)) for y in ys]
 
         for output in outputs:
@@ -50,7 +55,7 @@ class Function:
         
         self.inputs = inputs
         self.output = outputs
-        return outputs
+        return outputs if len(outputs) > 1 else outputs[0]
 
     def forward(self, x):
         raise NotImplementedError
@@ -129,18 +134,17 @@ class SquareTest(unittest.TestCase):
 
 #Step_11 
 class Add(Function):
-    def forward(self, xs):
-        x0, x1 = xs
+    def forward(self, x0, x1):
         y = x0 + x1
-        return (y,)
+        return y
+
+#Step_12 : Add 클래스를 파이썬 함수로 만듬
+def add(x0, x1):
+    return Add()(x0, x1)
 
 if __name__ == "__main__":
-    xs = [Variable(np.array(2)), Variable(np.array(3))]
-    f = Add()
-    ys = f(xs)
+    x0 = Variable(np.array(2))
+    x1 = Variable(np.array(3))
 
-    y = ys[0]
+    y = add(x0, x1) # Add 클래스 생성 과정이 감춰진다
     print(y.data)
-
-   
-

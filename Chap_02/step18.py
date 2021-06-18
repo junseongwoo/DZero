@@ -1,7 +1,7 @@
-# Step_17 메모리 관리와 순환 참조
-
+# Step_18 메모리 절약 모드
 import numpy as np 
-import unittest 
+import unittest
+import weakref
 
 class Variable:
     def __init__(self, data) -> None:
@@ -20,7 +20,7 @@ class Variable:
         self.creator = func
         self.generation =func.generation + 1 # 세대를 기록 (부모 세대 + 1)
     
-    def backward(self):
+    def backward(self, retain_grad=False):
         if self.grad is None: 
             self.grad = np.ones_like(self.data)
             
@@ -37,7 +37,7 @@ class Variable:
 
         while funcs :
             f = funcs.pop()        
-            gys = [output.grad for output in f.outputs]
+            gys = [output().grad for output in f.outputs]
             gxs = f.backward(*gys)
             if not isinstance(gxs, tuple):
                 gxs = (gxs, )
@@ -52,6 +52,10 @@ class Variable:
                 if x.creator is not None :
                     #funcs.append(x.creator)    
                     add_func(x.creator) # step_14 
+            
+            if not retain_grad :
+                for y in f.outputs:
+                    y().grad = None # y는 약한 참조 
     # step_14 
     def cleargrad(self):
         self.grad = None
@@ -65,12 +69,14 @@ class Function:
             ys = (ys,)
         outputs = [Variable(as_array(y)) for y in ys]
 
-        self.generation = max([x.generation for x in inputs])
-        for output in outputs:
-            output.set_creator(self)
-        
-        self.inputs = inputs
-        self.outputs = outputs
+        if Config.enable_backprop:
+            self.generation = max([x.generation for x in inputs])
+            for output in outputs:
+                output.set_creator(self)
+            
+            self.inputs = inputs
+            self.outputs = [weakref.ref(output) for output in outputs]
+
         return outputs if len(outputs) > 1 else outputs[0]
 
     def forward(self, x):
@@ -156,12 +162,12 @@ class Add(Function):
 def add(x0, x1):
     return Add()(x0, x1)
 
-if __name__ == "__main__":
-    x = Variable(np.array(2.0))
-    
-    a = square(x)
-    y = add(square(a), square(a))
-    y.backward()
+#Step_18 : 모드 전환을 위한 클래스
+class Config:
+    enable_backprop = True
 
-    print(y.data)
-    print(x.grad)
+if __name__ == "__main__":
+    for i in range(10):
+        x = Variable(np.random.randn(10000))
+        y = square(square(square(x)))
+        

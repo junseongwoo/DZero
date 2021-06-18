@@ -1,7 +1,10 @@
 # Step_17 메모리 관리와 순환 참조
 
 import numpy as np 
-import unittest 
+import unittest
+# 약한 참조 (weak reference)를 만드는 것 
+# 약한 참조 : 다른 객체를 참조하되 참조 카운트는 증가 시키지 않는 것 
+import weakref
 
 class Variable:
     def __init__(self, data) -> None:
@@ -37,7 +40,7 @@ class Variable:
 
         while funcs :
             f = funcs.pop()        
-            gys = [output.grad for output in f.outputs]
+            gys = [output().grad for output in f.outputs]
             gxs = f.backward(*gys)
             if not isinstance(gxs, tuple):
                 gxs = (gxs, )
@@ -70,7 +73,7 @@ class Function:
             output.set_creator(self)
         
         self.inputs = inputs
-        self.outputs = outputs
+        self.outputs = [weakref.ref(output) for output in outputs]
         return outputs if len(outputs) > 1 else outputs[0]
 
     def forward(self, x):
@@ -157,11 +160,7 @@ def add(x0, x1):
     return Add()(x0, x1)
 
 if __name__ == "__main__":
-    x = Variable(np.array(2.0))
-    
-    a = square(x)
-    y = add(square(a), square(a))
-    y.backward()
-
-    print(y.data)
-    print(x.grad)
+    for i in range(10):
+        x = Variable(np.random.randn(10000))
+        y = square(square(square(x)))
+        

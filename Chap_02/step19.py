@@ -1,4 +1,4 @@
-# Step_18 변수 사용성 개선
+# Step_19 변수 사용성 개선
 import numpy as np 
 import unittest
 import weakref

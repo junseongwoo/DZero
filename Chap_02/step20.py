@@ -1,11 +1,11 @@
-# Step_18 변수 사용성 개선
+# Step_20 연산자 오버로드(1)
 import numpy as np 
 import unittest
 import weakref
 
 class Variable:
     def __init__(self, data, name=None):
-        # ndarray 가 아닌 데이타 타입이 오면 에러 띄움 
+        # ndarray 가 아닌 데이터 타입이 오면 에러 띄움 
         if data is not None:
             if not isinstance(data, np.ndarray):
                 raise TypeError('{}은(는) 지원하지 않습니다.'.format(type(data)))
@@ -86,7 +86,12 @@ class Variable:
             return 'variable(None)'
         p = str(self.data).replace('\n', '\n' + ' ' * 9)
         return 'variable(' + p + ' )'
-                    
+    
+    # * 연산자 오버로딩 
+    def __mul__(self, other):
+        return mul(self, other)
+    # 더 간단하게 만들수 있음 
+    #Variable.__mul__ = mul 
 
 class Function:
     def __call__(self, *inputs):
@@ -192,6 +197,24 @@ def add(x0, x1):
 #Step_18 : 모드 전환을 위한 클래스
 class Config:
     enable_backprop = True
+
+#Step_20 : * 연산자 지원 
+class Mul(Function):
+    def forward(self, x0, x1):
+        y = x0 * x1
+        return y
+    
+    def backward(self, gy):
+        x0, x1 = self.inputs[0].data, self.inputs[1].data
+        return gy * x1, gy * x0 
+
+# Mul 클래스를 파이썬 함수로 사용하게 만드는 작업 
+def mul(x0, x1):
+    return Mul()(x0, x1)
+
+# 파이썬에서는 함수도 객체이므로 함수 자체를 할당 할 수 있다.
+Variable.__mul__ = mul
+Variable.__add__ = add
 
 if __name__ == "__main__":
     for i in range(10):

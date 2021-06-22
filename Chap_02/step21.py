@@ -86,7 +86,6 @@ class Variable:
             return 'variable(None)'
         p = str(self.data).replace('\n', '\n' + ' ' * 9)
         return 'variable(' + p + ')'
-    
     # * 연산자 오버로딩 
     def __mul__(self, other):
         return mul(self, other)
@@ -214,19 +213,20 @@ class Mul(Function):
 
 # Mul 클래스를 파이썬 함수로 사용하게 만드는 작업 
 def mul(x0, x1):
+    x1 = as_array(x1)
     return Mul()(x0, x1)
-
-# 파이썬에서는 함수도 객체이므로 함수 자체를 할당 할 수 있다.
-Variable.__mul__ = mul
-Variable.__add__ = add
-Variable.__radd__ = mul 
-Variable.__rmul__ = mul 
 
 # Step_21 
 def as_variable(obj):
     if isinstance(obj, Variable):
         return obj
     return Variable(obj)
+
+# 파이썬에서는 함수도 객체이므로 함수 자체를 할당 할 수 있다.
+Variable.__add__ = add
+Variable.__radd__ = add 
+Variable.__mul__ = mul 
+Variable.__rmul__ = mul 
 
 if __name__ == "__main__":
     x = Variable(np.array(2.0))

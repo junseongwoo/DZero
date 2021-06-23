@@ -1,4 +1,4 @@
-# Step_21 연산자 오버로드(2)
+# Step_21 연산자 오버로드(3)
 import numpy as np 
 import unittest
 import weakref
@@ -229,7 +229,33 @@ Variable.__radd__ = add
 Variable.__mul__ = mul 
 Variable.__rmul__ = mul 
 
+# step_21 부호 변환
+class Neg(Function):
+    def forward(self, x):
+        return -x
+    def backward(self, grad):
+        return -grad
+
+def neg(x):
+    return Neg()(x)
+
+Variable.__neg__ = neg
+
+# step_21 뺄셈
+class Sub(Function):
+    def forward(self, x0, x1):
+        y = x0 - x1 
+        return y
+    def backward(self, gy):
+        return gy, -gy
+
+def sub(x0, x1):
+    x1 = as_array(x1)
+    return Sub()(x0, x1)
+
+Variable.__sub__ = sub
+
 if __name__ == "__main__":
     x = Variable(np.array(2.0))
-    y = 3.0 * x + 1.0
+    y = -x
     print(y)

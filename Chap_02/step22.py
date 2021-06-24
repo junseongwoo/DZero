@@ -1,4 +1,4 @@
-# Step_21 연산자 오버로드(3)
+# Step_22 연산자 오버로드(3)
 import numpy as np 
 import unittest
 import weakref
@@ -265,7 +265,7 @@ class Div(Function):
     def forward(self, x0, x1):
         y = x0 / x1
         return y
-    def backward(self, grad):
+    def backward(self, gy):
         x0, x1 = self.inputs[0].data, self.inputs[1].data
         gx0 = gy / x1
         gx1 = gy * (-x0 / x1 ** 2)
@@ -289,7 +289,7 @@ class Pow(Function):
         y = x ** self.c
         return y 
     
-    def backward(self, grad):
+    def backward(self, gy):
         x = self.inputs[0].data
         c = self.c 
         gx = c * x ** (c-1) * gy

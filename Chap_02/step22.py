@@ -302,5 +302,5 @@ Variable.__pow__ = pow
 
 if __name__ == "__main__":
     x = Variable(np.array(2.0))
-    y = x ** 3
+    y = 0.26 * x
     print(y)

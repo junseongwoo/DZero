@@ -157,6 +157,10 @@ def mul(x0, x1):
     x1 = as_array(x1)
     return Mul()(x0, x1)
 
+def rmul(x0, x1):
+    x1 = as_array(x1)
+    return Mul()(x0, x1)
+
 class Neg(Function):
     def forward(self, x):
         return -x

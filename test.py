@@ -1,5 +1,12 @@
-import numpy as np
-from dezero.core_simple import Variable 
+class Animal:
+  pass 
 
-x = Variable(np.array(1.0))
-print(x)
+cat = Animal()
+print(isinstance(cat, Animal))
+
+class Dog(Animal):
+  pass 
+
+dog = Dog() 
+print(isinstance(dog, Animal))
+print(isinstance(dog, Dog))
